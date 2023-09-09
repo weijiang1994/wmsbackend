@@ -11,6 +11,8 @@
 """
 from flask import Flask
 from wms.api.auth import auth_bp
+from wms.api.index import index_bp
+from wms.api.user import user_bp
 from wms.plugins import register_extensions
 from wms.settings import DevelopmentConfig, ProductionConfig
 from wms.models import *
@@ -24,6 +26,8 @@ def create_app(config_name=None):
     else:
         app.config.from_object(ProductionConfig)
     app.register_blueprint(auth_bp)
+    app.register_blueprint(index_bp)
+    app.register_blueprint(user_bp)
     register_extensions(app=app)
     register_commands(app)
 
@@ -49,36 +53,48 @@ def register_commands(app: Flask):
 
     @app.cli.command('create-admin', help='Create the admin user.')
     @click.option('--username', prompt=True, help='The username of the admin user.')
+    @click.option('--email', prompt=True, help='The email of the admin user.')
+    @click.option('--name', prompt=True, help='The email of the admin user.')
     @click.option('--password', prompt=True, hide_input=True, confirmation_prompt=True,
                   help='The password of the admin user.')
-    def create_admin(username, password):
+    def create_admin(username, password, email, name):
+        sys_admin = Role.query.filter_by(name='sys-admin').first()
+        if not sys_admin:
+            click.echo('The system administrator permission does not exist.')
+            return
         if User.query.filter_by(username=username).first():
             click.echo('The username is already in use.')
             return
-        User(username=username)
-        db.create_admin(username, password)
+        if User.query.filter_by(email=email).first():
+            click.echo('The email is already in use.')
+            return
+
+        user = User(username=username, email=email, phone='', name=name)
+        user.set_password(password)
+        db.session.add(user)
+        db.session.flush()
+        ur = UserRole(user_id=user.id, role_id=sys_admin.id)
+        db.session.add(ur)
+        db.session.commit()
         click.echo('Created admin user.')
-
-    def init_permission():
-        from wms.models import Permission
-        Permission.init_permission()
-
-    @app.cli.command('init-permission', help='Initialize the permission.')
-    def init_permission():
-        init_permission()
-        click.echo('Initialized permission.')
 
     @app.cli.command('init-perm', help='Initialize the permission.')
     def init_perm():
         if Role.query.filter_by(name='sys-admin').first():
             click.echo('The permission is already initialized.')
             return
-        role = Role(name='sys-admin', description='System administrator.')
+        role = Role(name='sys-admin', description='系统管理员，拥有所有权限，最高权限角色。')
         db.session.add(role)
         db.session.commit()
-        permissions = ['sys-admin', 'user-admin']
+        permissions = [
+            ['sys-admin', '系统管理员，最高权限'],
+            ['user-admin', '用户管理员，可以增加、编辑用户以及用户权限'],
+            ['site-user', '网站用户，最低级权限每个用户都拥有'],
+            ['out-admin', '物料出库权限'],
+            ['in-admin', '物料入库权限']
+        ]
         for perm in permissions:
-            permission = Permission(name=perm, role=role.id, description='')
+            permission = Permission(name=perm[0], role=role.id, description=perm[1])
             db.session.add(permission)
         db.session.commit()
         click.echo('Initialized permission.')

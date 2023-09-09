@@ -12,6 +12,7 @@
 from wms.plugins import db
 from sqlalchemy.ext.declarative import declared_attr
 import datetime
+from werkzeug.security import generate_password_hash, check_password_hash
 
 
 class TimeMixin:
@@ -54,13 +55,20 @@ class User(db.Model, TimeMixin):
                    autoincrement=True, comment='用户ID')
     username = db.Column(db.String(32), unique=True,
                          nullable=False, comment='用户名')
+    name = db.Column(db.String(32), nullable=False, comment='姓名', default='')
     password = db.Column(db.String(128), nullable=False, comment='密码')
     email = db.Column(db.String(32), unique=True, nullable=False, comment='邮箱')
-    phone = db.Column(db.String(11), unique=True,
-                      nullable=False, comment='手机号')
+    phone = db.Column(db.String(11), default='', nullable=False, comment='手机号')
+    last_login_time = db.Column(db.DateTime, default=datetime.datetime.now, comment='最后登录时间')
 
     def __repr__(self):
         return '<User %r>' % self.username
+
+    def set_password(self, pwd):
+        self.password = generate_password_hash(pwd)
+
+    def check_password(self, pwd):
+        return check_password_hash(self.password, pwd)
 
 
 class Role(db.Model, TimeMixin):
@@ -106,8 +114,46 @@ class Warehouse(db.Model, TimeMixin):
     id = db.Column(db.Integer, primary_key=True,
                    autoincrement=True, comment='仓库ID')
     name = db.Column(db.String(32), unique=True, nullable=False, comment='仓库名')
-    volunm = db.Column(db.Integer, comment='仓库容量')
+    volume = db.Column(db.Integer, comment='仓库容量')
     address = db.Column(db.String(128), comment='仓库地址')
     manager = db.Column(db.String(32), comment='仓库管理员')
     status = db.Column(db.Integer, comment='仓库状态')
     left = db.Column(db.Integer, comment='仓库剩余容量')
+
+
+class Material(db.Model, TimeMixin):
+    __tablename__ = 't_material'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True, comment='物料ID')
+    name = db.Column(db.String(512), unique=True, nullable=False, comment='物料名')
+    type = db.Column(db.String(32), default='produce', comment='物料类型')
+    unit = db.Column(db.String(32), default='个', comment='物料单位')
+    price = db.Column(db.Float, default=0, comment='物料单价')
+    status = db.Column(db.Integer, default=0, comment='物料状态')
+    total = db.Column(db.Integer, default=0, comment='物料总数量')
+    left = db.Column(db.Integer, default=0, comment='物料剩余数量')
+    barcode = db.Column(db.String(128), comment='条形码编号')
+    warehouse_id = db.Column(db.Integer, comment='仓库ID', default=0)
+    used = db.Column(db.Integer, default=0, comment='物料已使用数量')
+
+
+class MaterialOut(db.Model, TimeMixin):
+    __tablename__ = 't_material_out'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True, comment='物料出库ID')
+    material_id = db.Column(db.Integer, default=0, comment='物料ID')
+    user_id = db.Column(db.Integer, default=0, comment='出库人')
+    warehouse_id = db.Column(db.Integer, comment='仓库ID', default=0)
+    num = db.Column(db.Integer, default=0, comment='出库数量')
+    out_time = db.Column(db.DateTime, default=datetime.datetime.now, comment='出库时间')
+
+
+class MaterialIn(db.Model, TimeMixin):
+    __tablename__ = 't_material_in'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True, comment='物料入库ID')
+    material_id = db.Column(db.Integer, default=0, comment='物料ID')
+    user_id = db.Column(db.Integer, default=0, comment='入库人')
+    warehouse_id = db.Column(db.Integer, comment='仓库ID', default=0)
+    num = db.Column(db.Integer, default=0, comment='入库数量')
+    in_time = db.Column(db.DateTime, default=datetime.datetime.now, comment='入库时间')

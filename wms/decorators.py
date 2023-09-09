@@ -19,7 +19,6 @@ def get_params(
         methods: str = 'GET',
         check_para: bool = False,
         remove_none: bool = False,
-        is_kwargs: bool = False
 ):
     """
     获取请求中的参数
@@ -28,7 +27,6 @@ def get_params(
     :param params: 参数列表
     :param types: 参数类型
     :param methods: 请求方法
-    :param is_kwargs: 是否传递为关键字参数
     :return: 参数列表所对应的参数值
     """
 
@@ -36,7 +34,6 @@ def get_params(
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
-            arg = []
             kwarg = {}
             if methods == 'GET':
                 if len(types) != len(params):
@@ -45,31 +42,26 @@ def get_params(
                     # 对于bool类型的参数特殊处理，因为如果传入的为false也会当做为True
                     if type == bool:
                         if request.args.get(param, default='false').lower() == 'true':
-                            arg.append(True)
                             kwarg[param] = True
                         else:
-                            arg.append(False)
                             kwarg[param] = False
                     else:
                         value = request.args.get(param, type=type)
-                        arg.append(value)
                         kwarg[param] = value
             elif methods == 'POST':
                 for param in params:
-                    arg.append(request.json.get(param))
+                    kwarg[param] = request.json.get(param)
             if check_para:
-                if None in arg or '' in arg:
-                    return jsonify(dict(
-                        code=403,
-                        msg='参数不完整,请检查参数后重试!'
-                    ))
+                for key, value in kwarg.items():
+                    if value is None or value == '':
+                        return jsonify(dict(
+                            code=403,
+                            msg='参数不完整,请检查参数后重试!'
+                        ))
             if remove_none:
-                arg = list(filter(lambda x: x, arg))
                 kwarg = dict(filter(lambda x: x[1] not in [
-                             None, ''], kwarg.items()))
-            if is_kwargs:
-                return func(**kwarg)
-            return func(*arg)
+                    None, ''], kwarg.items()))
+            return func(**kwarg)
 
         return wrapper
 
