@@ -60,6 +60,7 @@ class User(db.Model, TimeMixin):
     email = db.Column(db.String(32), unique=True, nullable=False, comment='邮箱')
     phone = db.Column(db.String(11), default='', nullable=False, comment='手机号')
     last_login_time = db.Column(db.DateTime, default=datetime.datetime.now, comment='最后登录时间')
+    status = db.Column(db.Integer, default=1, comment='状态：0-禁用，1-启用')
 
     def __repr__(self):
         return '<User %r>' % self.username
@@ -100,7 +101,7 @@ class Permission(db.Model, TimeMixin):
 
     id = db.Column(db.Integer, primary_key=True,
                    autoincrement=True, comment='权限ID')
-    name = db.Column(db.String(32), unique=True, nullable=False, comment='权限名')
+    name = db.Column(db.String(32), nullable=False, comment='权限名')
     role = db.Column(db.INTEGER, comment='角色ID')
     description = db.Column(db.String(128), nullable=False, comment='角色描述', default='')
 

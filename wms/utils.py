@@ -9,8 +9,8 @@ from flask import jsonify
 
 class ResultJson:
     @staticmethod
-    def ok(data=None, **kwargs):
-        return jsonify(dict(code=200, msg='OK', data=data, **kwargs))
+    def ok(data=None, msg='OK', **kwargs):
+        return jsonify(dict(code=200, msg=msg, data=data, **kwargs))
 
     @staticmethod
     def not_found(msg='Record not found.', **kwargs):
