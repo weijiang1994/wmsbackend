@@ -118,6 +118,10 @@ def change_status(uid, status):
 @user_bp.route('/permission/list')
 @jwt_required()
 def perm_list():
+    if request.args.get('type') == 'brief':
+        return ResultJson.ok(data=[
+            perm.name for perm in Permission.query.group_by(Permission.name).with_entities(Permission.name).all()
+        ])
     permissions = Permission.query.join(
         Role,
         Role.id == Permission.role
@@ -184,3 +188,90 @@ def delete_perm():
     Permission.query.filter_by(name=perm_name).delete()
     db.session.commit()
     return ResultJson.ok(msg='删除成功！')
+
+
+@user_bp.route('/role/lists')
+@jwt_required()
+def role_detail_list():
+    roles = Role.query.join(
+        Permission,
+        Permission.role == Role.id
+    ).with_entities(
+        Permission.name.label('perm'),
+        Role.name,
+        Role.id,
+        Role.description
+    )
+    results = {}
+    for role in roles:
+        if role.name not in results.keys():
+            results[role.name] = dict(
+                name=role.name,
+                id=role.id,
+                desc=role.description,
+                perms=[]
+            )
+        results[role.name]['perms'].append(role.perm)
+    return ResultJson.ok(
+        data=list(results.values())
+    )
+
+
+@user_bp.route('/role/add', methods=['POST'])
+@jwt_required()
+@get_params(
+    params=['name', 'desc', 'perms'],
+    types=[str, str, list],
+    methods='POST'
+)
+def add_role(name, desc, perms):
+    if Role.query.filter(Role.name == name).first():
+        return ResultJson.forbidden(msg='角色已经存在')
+    role = Role(
+        name=name,
+        description=desc
+    )
+    db.session.add(role)
+    db.session.commit()
+    add_new_perm4role(perms, role)
+    db.session.commit()
+    return ResultJson.ok(msg='添加角色成功！')
+
+
+def add_new_perm4role(perms: list, role: Role) -> None:
+    """
+    给角色添加权限
+
+    :param perms: 权限名称列表
+    :param role: 角色
+    :return: None
+    """
+    for perm in perms:
+        db_perm = Permission.query.filter(Permission.name == perm).first()
+        p = Permission(
+            name=perm,
+            role=role.id,
+            description=db_perm.description if db_perm else ''
+        )
+        db.session.add(p)
+    db.session.commit()
+
+
+@user_bp.route('/role/edit', methods=['POST'])
+@jwt_required()
+@get_params(
+    params=['rid', 'name', 'desc', 'perms'],
+    types=[int, str, str, list],
+    methods='POST'
+)
+def edit_role(rid, name, desc, perms):
+    role = Role.query.filter(Role.id == rid).first()
+    if not role:
+        return ResultJson.forbidden(msg='不存在的角色！')
+    # 删除原有的权限
+    role.name = name
+    role.description = desc
+    Permission.query.filter(Permission.role == rid).delete()
+    db.session.commit()
+    add_new_perm4role(perms, role)
+    return ResultJson.ok(msg='角色信息编辑成功！')
