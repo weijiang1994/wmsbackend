@@ -61,6 +61,7 @@ class User(db.Model, TimeMixin):
     phone = db.Column(db.String(11), default='', nullable=False, comment='手机号')
     last_login_time = db.Column(db.DateTime, default=datetime.datetime.now, comment='最后登录时间')
     status = db.Column(db.Integer, default=1, comment='状态：0-禁用，1-启用')
+    avatar = db.Column(db.String(1024), default='/static/default.png', comment='用户头像')
 
     def __repr__(self):
         return '<User %r>' % self.username

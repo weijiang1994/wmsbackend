@@ -6,7 +6,7 @@ file: Warehouse.py
 """
 from flask import Blueprint
 from flask_jwt_extended import jwt_required
-from wms.models import Warehouse
+from wms.models import Warehouse, User
 from wms.decorators import get_params
 from wms.plugins import db
 from wms.utils import ResultJson
@@ -38,7 +38,21 @@ def add(name, address, manager, volume, tags):
 @warehouse_bp.route("/list")
 @jwt_required()
 def lists():
-    warehouses = Warehouse.query.all()
+    warehouses = Warehouse.query.join(
+        User,
+        User.id == Warehouse.manager
+    ).with_entities(
+        Warehouse.name,
+        Warehouse.address,
+        Warehouse.tag,
+        Warehouse.volume,
+        Warehouse.left,
+        Warehouse.status,
+        Warehouse.create_time,
+        User.username,
+        User.name,
+        User.id.label('uid')
+    ).all()
     return ResultJson.ok(data=[dict(
         name=wh.name,
         address=wh.address,
@@ -46,5 +60,9 @@ def lists():
         volume=wh.volume,
         left=wh.left,
         status=wh.status,
-        create_time=str(wh.create_time)
+        create_time=str(wh.create_time),
+        manager=dict(
+            username=wh.username,
+            name=wh.name,
+        )
     ) for wh in warehouses])
