@@ -115,11 +115,12 @@ class Warehouse(db.Model, TimeMixin):
     id = db.Column(db.Integer, primary_key=True,
                    autoincrement=True, comment='仓库ID')
     name = db.Column(db.String(32), unique=True, nullable=False, comment='仓库名')
-    volume = db.Column(db.Integer, comment='仓库容量')
-    address = db.Column(db.String(128), comment='仓库地址')
-    manager = db.Column(db.String(32), comment='仓库管理员')
-    status = db.Column(db.Integer, comment='仓库状态')
-    left = db.Column(db.Integer, comment='仓库剩余容量')
+    volume = db.Column(db.Integer, default=0, comment='仓库容量')
+    address = db.Column(db.String(128), default='', comment='仓库地址')
+    manager = db.Column(db.String(32), default=0, comment='仓库管理员')
+    status = db.Column(db.Integer, default=1, comment='仓库状态')
+    left = db.Column(db.Integer, default=0, comment='仓库剩余容量')
+    tag = db.Column(db.JSON, default=[], comment='仓库标签')
 
 
 class Material(db.Model, TimeMixin):

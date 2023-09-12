@@ -17,6 +17,7 @@ from wms.plugins import register_extensions
 from wms.settings import DevelopmentConfig, ProductionConfig
 from wms.models import *
 from wms.plugins import db
+from wms.api.warehouse import warehouse_bp
 
 
 def create_app(config_name=None):
@@ -28,6 +29,7 @@ def create_app(config_name=None):
     app.register_blueprint(auth_bp)
     app.register_blueprint(index_bp)
     app.register_blueprint(user_bp)
+    app.register_blueprint(warehouse_bp)
     register_extensions(app=app)
     register_commands(app)
 
