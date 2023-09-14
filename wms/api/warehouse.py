@@ -10,6 +10,8 @@ from wms.models import Warehouse, User
 from wms.decorators import get_params
 from wms.plugins import db
 from wms.utils import ResultJson
+from urllib.parse import urljoin
+import os
 
 warehouse_bp = Blueprint('warehouse_bp', __name__, url_prefix='/warehouse')
 
@@ -50,8 +52,9 @@ def lists():
         Warehouse.status,
         Warehouse.create_time,
         User.username,
-        User.name,
-        User.id.label('uid')
+        User.name.label('uname'),
+        User.id.label('uid'),
+        User.avatar
     ).all()
     return ResultJson.ok(data=[dict(
         name=wh.name,
@@ -63,6 +66,7 @@ def lists():
         create_time=str(wh.create_time),
         manager=dict(
             username=wh.username,
-            name=wh.name,
+            name=wh.uname,
+            avatar=urljoin(os.environ.get('HOST'), wh.avatar)
         )
     ) for wh in warehouses])
