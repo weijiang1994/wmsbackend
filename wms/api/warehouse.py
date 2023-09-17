@@ -44,6 +44,7 @@ def lists():
         User,
         User.id == Warehouse.manager
     ).with_entities(
+        Warehouse.id,
         Warehouse.name,
         Warehouse.address,
         Warehouse.tag,
@@ -57,6 +58,7 @@ def lists():
         User.avatar
     ).all()
     return ResultJson.ok(data=[dict(
+        id=wh.id,
         name=wh.name,
         address=wh.address,
         tags=wh.tag,
