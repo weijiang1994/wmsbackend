@@ -137,6 +137,7 @@ class Material(db.Model, TimeMixin):
     left = db.Column(db.Integer, default=0, comment='物料剩余数量')
     barcode = db.Column(db.String(128), comment='条形码编号')
     warehouse_id = db.Column(db.Integer, comment='仓库ID', default=0)
+    user_id = db.Column(db.Integer, comment='用户ID', default=0)
     used = db.Column(db.Integer, default=0, comment='物料已使用数量')
 
 
@@ -160,3 +161,12 @@ class MaterialIn(db.Model, TimeMixin):
     warehouse_id = db.Column(db.Integer, comment='仓库ID', default=0)
     num = db.Column(db.Integer, default=0, comment='入库数量')
     in_time = db.Column(db.DateTime, default=datetime.datetime.now, comment='入库时间')
+
+
+class MaterialSpec(db.Model, TimeMixin):
+    __tablename__ = 't_material_spec'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True, comment='物料入库ID')
+    name = db.Column(db.String(512), default='', comment='规格名称')
+    description = db.Column(db.TEXT, default='', comment='规格描述信息')
+    images = db.Column(db.JSON, default='', comment='规格简图')
