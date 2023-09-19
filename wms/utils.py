@@ -43,7 +43,7 @@ class Config:
     def load(self):
         config_path = os.path.join(basedir, 'config/config.yaml')
         if not os.path.exists(config_path):
-            raise Exception(f'请先配置系统的配置文件，在{basedir}路径下创建config/config.yaml文件')
+            raise Exception(f'请先配置系统配置文件，在{basedir}路径下创建config/config.yaml文件')
         with open(os.path.join(basedir, 'config/config.yaml')) as f:
             self.config = yaml.load(f)
 
