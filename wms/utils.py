@@ -4,8 +4,10 @@ file: utils.py
 @time: 2023/9/2 16:19
 @desc:
 """
+import os
+from wms.settings import basedir
 from flask import jsonify
-
+import yaml
 
 class ResultJson:
     @staticmethod
@@ -31,3 +33,19 @@ class ResultJson:
     @staticmethod
     def server_error(msg='Server error.', **kwargs):
         return jsonify(dict(code=500, msg=msg, **kwargs))
+
+
+class Config:
+    def __init__(self):
+        self.config = None
+        self.load()
+
+    def load(self):
+        config_path = os.path.join(basedir, 'config/config.yaml')
+        if not os.path.exists(config_path):
+            raise Exception(f'请先配置系统的配置文件，在{basedir}路径下创建config/config.yaml文件')
+        with open(os.path.join(basedir, 'config/config.yaml')) as f:
+            self.config = yaml.load(f)
+
+
+config = Config()
