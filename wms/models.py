@@ -47,6 +47,10 @@ class TimeMixin:
     def existed(cls, condition: tuple):
         return cls.query.filter(*condition).first()
 
+    def save(self):
+        db.session.add(self)
+        db.session.commit()
+
 
 class User(db.Model, TimeMixin):
     __tablename__ = 't_user'
@@ -170,3 +174,5 @@ class MaterialSpec(db.Model, TimeMixin):
     name = db.Column(db.String(512), default='', comment='规格名称')
     description = db.Column(db.TEXT, default='', comment='规格描述信息')
     images = db.Column(db.JSON, default='', comment='规格简图')
+    user = db.Column(db.INTEGER, default=0, comment='规格创建人')
+

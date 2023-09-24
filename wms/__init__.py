@@ -18,6 +18,8 @@ from wms.settings import DevelopmentConfig, ProductionConfig
 from wms.models import *
 from wms.plugins import db
 from wms.api.warehouse import warehouse_bp
+from wms.api.material import material_bp
+from wms.api.tools import tools_bp
 
 
 def create_app(config_name=None):
@@ -30,6 +32,8 @@ def create_app(config_name=None):
     app.register_blueprint(index_bp)
     app.register_blueprint(user_bp)
     app.register_blueprint(warehouse_bp)
+    app.register_blueprint(material_bp)
+    app.register_blueprint(tools_bp)
     register_extensions(app=app)
     register_commands(app)
 

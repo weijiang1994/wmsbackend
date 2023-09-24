@@ -66,3 +66,23 @@ def get_params(
         return wrapper
 
     return decorator
+
+
+def path_existed(path: str):
+    """
+    检查路径是否存在
+    :param path: 路径
+    :return:
+    """
+
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            import os
+            if not os.path.exists(path):
+                os.makedirs(path)
+            return func(*args, **kwargs)
+
+        return wrapper
+
+    return decorator

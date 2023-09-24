@@ -29,6 +29,20 @@ def upload_img():
     return ResultJson.ok(msg='图片上传成功！', url=url)
 
 
+@tools_bp.route('/remove-img', methods=['POST'])
+@path_existed(config.get('img.save'))
+def remove_img():
+    uuid = request.json.get('uuid')
+    path = request.json.get('path')
+    if not uuid or not path:
+        return ResultJson.bad_request(msg='参数错误！')
+    path = os.path.join(config.get('img.save'), uuid, os.path.basename(path))
+    if not os.path.exists(path):
+        return ResultJson.bad_request(msg='图片不存在！')
+    os.remove(path)
+    return ResultJson.ok(msg='图片删除成功！')
+
+
 @tools_bp.route('/load-img/<path:path>')
 def load_img(path):
     return send_from_directory(config.get('img.save'), path)
