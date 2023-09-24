@@ -143,6 +143,7 @@ class Material(db.Model, TimeMixin):
     warehouse_id = db.Column(db.Integer, comment='仓库ID', default=0)
     user_id = db.Column(db.Integer, comment='用户ID', default=0)
     used = db.Column(db.Integer, default=0, comment='物料已使用数量')
+    spec = db.Column(db.Integer, default=0, comment='物料规格')
 
 
 class MaterialOut(db.Model, TimeMixin):

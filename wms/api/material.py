@@ -9,7 +9,7 @@ import os
 from flask import Blueprint, request, url_for, escape
 from wms.decorators import get_params, path_existed
 from wms.utils import ResultJson, config, get_uuid
-from wms.models import MaterialSpec, User
+from wms.models import MaterialSpec, User, Material, MaterialIn
 from urllib.parse import urljoin, unquote
 from flask_jwt_extended import current_user, jwt_required
 
@@ -75,3 +75,34 @@ def list_spec(page, size, name):
         ) for spec in specs.items],
         total=specs.total
     )
+
+
+@material_bp.route('/stocking', methods=['POST'])
+@get_params(
+    params=['name', 'spec', 'unit', 'amount', 'price', 'warehouseId', 'type', 'code'],
+    types=[str, str, str, str, str, str, str, str],
+    methods='POST',
+    check_para=True
+)
+@jwt_required()
+def stocking_material(name, spec, unit, amount, price, warehouseId, type, code):
+    material = Material(
+        name=name,
+        spec=spec,
+        unit=unit,
+        total=amount,
+        left=amount,
+        price=price,
+        warehouse_id=warehouseId,
+        type=type,
+        barcode=code,
+        user_id=current_user.id
+    )
+    material.save()
+    MaterialIn(
+        material_id=material.id,
+        num=amount,
+        user_id=current_user.id,
+        warehouse_id=warehouseId
+    ).save()
+    return ResultJson.ok(msg='入库成功！')
