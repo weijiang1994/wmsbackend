@@ -46,32 +46,22 @@ def add_spec():
     types=[int, int, str]
 )
 def list_spec(page, size, name):
+    query = MaterialSpec.id
     if name:
-        specs = MaterialSpec.query.join(
-            User,
-            User.id == MaterialSpec.user
-        ).filter(
-            MaterialSpec.name.like(f"{name}%")
-        ).with_entities(
-            MaterialSpec.name,
-            MaterialSpec.description,
-            MaterialSpec.create_time,
-            MaterialSpec.update_time,
-            MaterialSpec.images,
-            User.name.label('user')
-        ).paginate(page=page, per_page=size)
-    else:
-        specs = MaterialSpec.query.join(
-            User,
-            User.id == MaterialSpec.user
-        ).with_entities(
-            MaterialSpec.name,
-            MaterialSpec.description,
-            MaterialSpec.create_time,
-            MaterialSpec.update_time,
-            MaterialSpec.images,
-            User.name.label('user')
-        ).paginate(page=page, per_page=size)
+        query = MaterialSpec.name.like(f"{name}%")
+    specs = MaterialSpec.query.join(
+        User,
+        User.id == MaterialSpec.user
+    ).filter(
+        query
+    ).with_entities(
+        MaterialSpec.name,
+        MaterialSpec.description,
+        MaterialSpec.create_time,
+        MaterialSpec.update_time,
+        MaterialSpec.images,
+        User.name.label('user')
+    ).paginate(page=page, per_page=size)
     return ResultJson.ok(
         data=[dict(
             name=spec.name,
