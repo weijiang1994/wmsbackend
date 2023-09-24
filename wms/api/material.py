@@ -55,6 +55,7 @@ def list_spec(page, size, name):
     ).filter(
         query
     ).with_entities(
+        MaterialSpec.id,
         MaterialSpec.name,
         MaterialSpec.description,
         MaterialSpec.create_time,
@@ -64,6 +65,7 @@ def list_spec(page, size, name):
     ).paginate(page=page, per_page=size)
     return ResultJson.ok(
         data=[dict(
+            id=spec.id,
             name=spec.name,
             description=spec.description,
             images=[urljoin(config.HOST, img) for img in spec.images],
