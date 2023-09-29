@@ -1,27 +1,6 @@
 system:
   host: http://localhost:5000
 material:
-  unit:
-    - 个
-    - 件
-    - 台
-    - 套
-    - 箱
-    - 瓶
-    - 桶
-    - 包
-    - 盒
-    - 罐
-    - 卷
-    - 片
-    - 条
-    - 支
-    - 根
-    - 块
-    - 张
-    - 组
-    - 副
-    - 套
   status:
     enough: 0.8
     warning: 0.5
