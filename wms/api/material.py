@@ -4,12 +4,13 @@ file: material.py
 @time: 2023/9/17 23:36
 @desc:
 """
+import json
 import os
 
 from flask import Blueprint, request, url_for, escape
 from wms.decorators import get_params, path_existed
 from wms.utils import ResultJson, config, get_uuid, const
-from wms.models import MaterialSpec, User, Material, MaterialIn, Warehouse
+from wms.models import MaterialSpec, User, Material, MaterialIn, Warehouse, MaterialOut
 from urllib.parse import urljoin, unquote
 from flask_jwt_extended import current_user, jwt_required
 
@@ -173,3 +174,110 @@ def material_list(page, size, name, spec, warehouse_id):
         data=result,
         total=materials.total
     )
+
+
+@material_bp.route('/get/<int:material_id>')
+@jwt_required()
+def material_detail(material_id):
+    material = Material.query.join(
+        User,
+        User.id == Material.user_id
+    ).join(
+        Warehouse,
+        Warehouse.id == Material.warehouse_id
+    ).join(
+        MaterialSpec,
+        MaterialSpec.id == Material.spec
+    ).filter(
+        Material.id == material_id
+    ).with_entities(
+        Material.id,
+        Material.name,
+        MaterialSpec.name.label('spec'),
+        MaterialSpec.description,
+        User.name.label('user'),
+        MaterialSpec.images,
+        Material.unit,
+        Material.total,
+        Material.left,
+        Material.used,
+        Material.price,
+        Material.barcode,
+        Material.type,
+        Material.create_time,
+        Material.update_time,
+        Warehouse.name.label('warehouse'),
+        Warehouse.address,
+        Warehouse.create_time.label('wc_time'),
+        Warehouse.volume,
+        Warehouse.status.label('w_status'),
+        Warehouse.tag,
+        Material.status
+    ).first()
+    return ResultJson.ok(
+        data=dict(
+            material=dict(
+                id=material.id,
+                name=material.name,
+                type=material.type,
+                price=material.price,
+                barcode=material.barcode,
+                unit=material.unit,
+                total=material.total,
+                left=material.left,
+                used=material.used,
+                create_time=str(material.create_time),
+                update_time=str(material.update_time),
+                user=material.user,
+                status=const.MATERIAL_STATUS.get(material.status)
+            ),
+            spec=dict(
+                name=material.spec,
+                description=material.description,
+                images=[urljoin(config.HOST, img) for img in material.images]
+            ),
+            warehouse=dict(
+                name=material.warehouse,
+                address=material.address,
+                create_time=str(material.wc_time),
+                volume=material.volume,
+                tags=[tag for tag in material.tag],
+                status=material.w_status
+            )
+        )
+    )
+
+
+@material_bp.route('/out', methods=['POST'])
+@get_params(
+    params=['material_id', 'out', 'reason'],
+    types=[int, int, str],
+    methods='POST',
+    check_para=True
+)
+@jwt_required()
+def out_material(material_id, out, reason):
+    material = Material.query.filter_by(id=material_id).first()
+    if not material:
+        return ResultJson.not_found(msg='物料不存在！')
+    if material.left < out:
+        return ResultJson.bad_request(msg='物料数量不足！')
+    material.left -= out
+    material.used += out
+    if material.left / material.total > config.get('material.status.warning'):
+        material.status = 0
+    if material.left / material.total < config.get('material.status.warning'):
+        material.status = 1
+    if material.left / material.total < config.get('material.status.lack'):
+        material.status = 2
+    if material.left == 0:
+        material.status = 3
+    material.save()
+    MaterialOut(
+        material_id=material_id,
+        num=out,
+        reason=reason,
+        user_id=current_user.id,
+        warehouse_id=material.warehouse_id
+    ).save()
+    return ResultJson.ok(msg='出库成功！')

@@ -154,7 +154,7 @@ class MaterialOut(db.Model, TimeMixin):
     user_id = db.Column(db.Integer, default=0, comment='出库人')
     warehouse_id = db.Column(db.Integer, comment='仓库ID', default=0)
     num = db.Column(db.Integer, default=0, comment='出库数量')
-    out_time = db.Column(db.DateTime, default=datetime.datetime.now, comment='出库时间')
+    reason = db.Column(db.String(512), default='', comment='出库原因')
 
 
 class MaterialIn(db.Model, TimeMixin):
