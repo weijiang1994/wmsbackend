@@ -8,8 +8,8 @@ import os
 
 from flask import Blueprint, request, url_for, escape
 from wms.decorators import get_params, path_existed
-from wms.utils import ResultJson, config, get_uuid
-from wms.models import MaterialSpec, User, Material, MaterialIn
+from wms.utils import ResultJson, config, get_uuid, const
+from wms.models import MaterialSpec, User, Material, MaterialIn, Warehouse
 from urllib.parse import urljoin, unquote
 from flask_jwt_extended import current_user, jwt_required
 
@@ -106,3 +106,70 @@ def stocking_material(name, spec, unit, amount, price, warehouseId, type, code):
         warehouse_id=warehouseId
     ).save()
     return ResultJson.ok(msg='入库成功！')
+
+
+@material_bp.route('/list')
+@get_params(
+    params=['page', 'size', 'name', 'spec', 'warehouse_id'],
+    types=[int, int, str, str, str]
+)
+@jwt_required()
+def material_list(page, size, name, spec, warehouse_id):
+    query = (Material.id >= 0,)
+    if name:
+        query += (Material.name.like(f"{name}%"), )
+    if spec:
+        query += (Material.spec == spec,)
+    if warehouse_id:
+        query += (Material.warehouse_id == warehouse_id,)
+    materials = Material.query.join(
+        User,
+        User.id == Material.user_id
+    ).join(
+        Warehouse,
+        Warehouse.id == Material.warehouse_id
+    ).join(
+        MaterialSpec,
+        MaterialSpec.id == Material.spec
+    ).filter(*query).with_entities(
+        Material.id,
+        Material.name,
+        MaterialSpec.name.label('spec'),
+        Material.unit,
+        Material.total,
+        Material.left,
+        Material.used,
+        Material.price,
+        Material.barcode,
+        Material.type,
+        Material.create_time,
+        Material.update_time,
+        User.name.label('user'),
+        Warehouse.name.label('warehouse'),
+        Material.status
+    ).paginate(page=page, per_page=size)
+    result = []
+    for material in materials.items:
+
+        result.append(dict(
+            id=material.id,
+            name=material.name,
+            spec=material.spec,
+            unit=material.unit,
+            total=material.total,
+            left=material.left,
+            price=material.price,
+            barcode=material.barcode,
+            type=material.type,
+            create_time=str(material.create_time),
+            update_time=str(material.update_time),
+            user=material.user,
+            warehouse=material.warehouse,
+            used=material.used,
+            status=const.MATERIAL_STATUS.get(material.status)
+        ))
+
+    return ResultJson.ok(
+        data=result,
+        total=materials.total
+    )

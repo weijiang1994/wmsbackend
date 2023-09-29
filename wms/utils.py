@@ -67,3 +67,10 @@ def get_uuid():
 
 
 config = Config()
+
+
+class Const:
+    MATERIAL_STATUS = {0: '充足', 1: '告警', 2: '缺乏', 3: '无余量'}
+
+
+const = Const()
