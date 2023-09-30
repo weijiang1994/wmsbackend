@@ -263,14 +263,7 @@ def out_material(material_id, out, reason):
         return ResultJson.bad_request(msg='物料数量不足！')
     material.left -= out
     material.used += out
-    if material.left / material.total > config.get('material.status.warning'):
-        material.status = 0
-    if material.left / material.total < config.get('material.status.warning'):
-        material.status = 1
-    if material.left / material.total < config.get('material.status.lack'):
-        material.status = 2
-    if material.left == 0:
-        material.status = 3
+    get_material_status(material)
     material.save()
     MaterialOut(
         material_id=material_id,
@@ -280,6 +273,17 @@ def out_material(material_id, out, reason):
         warehouse_id=material.warehouse_id
     ).save()
     return ResultJson.ok(msg='出库成功！')
+
+
+def get_material_status(material):
+    if material.left / material.total > config.get('material.status.warning'):
+        material.status = 0
+    if material.left / material.total < config.get('material.status.warning'):
+        material.status = 1
+    if material.left / material.total < config.get('material.status.lack'):
+        material.status = 2
+    if material.left == 0:
+        material.status = 3
 
 
 @material_bp.route('/owner/out')
@@ -329,7 +333,7 @@ def owner_out_material(page, size, name, warehouse_id):
     )
 
 
-@material_bp.route('/storage/add', methods=['POST'])
+@material_bp.route('/add/storage', methods=['POST'])
 @jwt_required()
 def add_storage():
     num = request.json.get('num')
@@ -339,6 +343,9 @@ def add_storage():
     if not material:
         return ResultJson.not_found(msg='不存在的物料！')
     material.total += num
+    material.left += num
+    # material.save()
+    get_material_status(material)
     material.save()
     OperateLog(
         user_id=current_user.id,

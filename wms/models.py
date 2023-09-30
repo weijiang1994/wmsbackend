@@ -177,3 +177,13 @@ class MaterialSpec(db.Model, TimeMixin):
     images = db.Column(db.JSON, default='', comment='规格简图')
     user = db.Column(db.INTEGER, default=0, comment='规格创建人')
 
+
+class OperateLog(db.Model, TimeMixin):
+    __tablename__ = 't_operate_log'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True, comment='操作日志ID')
+    user_id = db.Column(db.Integer, default=0, comment='操作人')
+    operate = db.Column(db.String(512), default='', comment='操作内容')
+    type = db.Column(db.String(32), default='material', comment='操作类型')
+    description = db.Column(db.Text, default='', comment='操作描述')
+    note = db.Column(db.Text, default='', comment='备注信息')
