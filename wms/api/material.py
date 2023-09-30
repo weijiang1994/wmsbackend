@@ -10,7 +10,7 @@ import os
 from flask import Blueprint, request, url_for, escape
 from wms.decorators import get_params, path_existed
 from wms.utils import ResultJson, config, get_uuid, const
-from wms.models import MaterialSpec, User, Material, MaterialIn, Warehouse, MaterialOut
+from wms.models import MaterialSpec, User, Material, MaterialIn, Warehouse, MaterialOut, OperateLog
 from urllib.parse import urljoin, unquote
 from flask_jwt_extended import current_user, jwt_required
 
@@ -118,7 +118,7 @@ def stocking_material(name, spec, unit, amount, price, warehouseId, type, code):
 def material_list(page, size, name, spec, warehouse_id):
     query = (Material.id >= 0,)
     if name:
-        query += (Material.name.like(f"{name}%"), )
+        query += (Material.name.like(f"{name}%"),)
     if spec:
         query += (Material.spec == spec,)
     if warehouse_id:
@@ -151,7 +151,6 @@ def material_list(page, size, name, spec, warehouse_id):
     ).paginate(page=page, per_page=size)
     result = []
     for material in materials.items:
-
         result.append(dict(
             id=material.id,
             name=material.name,
@@ -285,14 +284,14 @@ def out_material(material_id, out, reason):
 
 @material_bp.route('/owner/out')
 @get_params(
-    params=['page', 'size', 'name',  'warehouse_id'],
+    params=['page', 'size', 'name', 'warehouse_id'],
     types=[int, int, str, str]
 )
 @jwt_required()
 def owner_out_material(page, size, name, warehouse_id):
     query = (MaterialOut.user_id == current_user.id,)
     if name:
-        query += (Material.name.like(f"{name}%"), )
+        query += (Material.name.like(f"{name}%"),)
     if warehouse_id:
         query += (Material.warehouse_id == warehouse_id,)
     materials = MaterialOut.query.join(
@@ -328,3 +327,23 @@ def owner_out_material(page, size, name, warehouse_id):
         data=result,
         total=materials.total
     )
+
+
+@material_bp.route('/storage/add', methods=['POST'])
+@jwt_required()
+def add_storage():
+    num = request.json.get('num')
+    mid = request.json.get('mid')
+    reason = request.json.get('reason')
+    material = Material.query.filter(Material.id == mid).first()
+    if not material:
+        return ResultJson.not_found(msg='不存在的物料！')
+    material.total += num
+    material.save()
+    OperateLog(
+        user_id=current_user.id,
+        type='add-storage',
+        description=f'<p>给物料<b>{material.name}</b>添加了<b>{num}</b>库存。</p>',
+        note=reason or ''
+    ).save()
+    return ResultJson.ok(msg='添加库存成功！')
