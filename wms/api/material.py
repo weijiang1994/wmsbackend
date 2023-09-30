@@ -281,3 +281,50 @@ def out_material(material_id, out, reason):
         warehouse_id=material.warehouse_id
     ).save()
     return ResultJson.ok(msg='出库成功！')
+
+
+@material_bp.route('/owner/out')
+@get_params(
+    params=['page', 'size', 'name',  'warehouse_id'],
+    types=[int, int, str, str]
+)
+@jwt_required()
+def owner_out_material(page, size, name, warehouse_id):
+    query = (MaterialOut.user_id == current_user.id,)
+    if name:
+        query += (Material.name.like(f"{name}%"), )
+    if warehouse_id:
+        query += (Material.warehouse_id == warehouse_id,)
+    materials = MaterialOut.query.join(
+        User,
+        User.id == MaterialOut.user_id
+    ).join(
+        Warehouse,
+        Warehouse.id == MaterialOut.warehouse_id
+    ).join(
+        Material,
+        Material.id == MaterialOut.material_id
+    ).filter(*query).with_entities(
+        MaterialOut.id,
+        MaterialOut.num,
+        MaterialOut.reason,
+        MaterialOut.create_time,
+        User.name.label('user'),
+        Warehouse.name.label('warehouse'),
+        Material.name.label('material')
+    ).paginate(page=page, per_page=size)
+    result = []
+    for material in materials.items:
+        result.append(dict(
+            id=material.id,
+            num=material.num,
+            reason=material.reason,
+            create_time=str(material.create_time),
+            user=material.user,
+            warehouse=material.warehouse,
+            name=material.material
+        ))
+    return ResultJson.ok(
+        data=result,
+        total=materials.total
+    )
