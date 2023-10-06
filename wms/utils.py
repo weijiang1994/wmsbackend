@@ -73,7 +73,9 @@ class Const:
     MATERIAL_STATUS = {0: '充足', 1: '告警', 2: '缺乏', 3: '无余量'}
     MATERIAL_ENOUGH = config.get('material.enough')
     OPERATE_TYPE = {
-        'add-storage': '添加库存'
+        'add-storage': '添加库存',
+        'batch-stocking': '批量入库',
     }
+
 
 const = Const()

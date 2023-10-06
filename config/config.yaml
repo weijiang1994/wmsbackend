@@ -4,5 +4,7 @@ material:
   status:
     warning: 0.5
     lack: 0.2
+  template: F:\\wms\\wms-backend\\images\\templates
+  batch: F:\\wms\\wms-backend\\images\\batch
 img:
   save: F:\\wms\\wms-backend\\images
