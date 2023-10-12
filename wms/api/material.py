@@ -83,13 +83,13 @@ def list_spec(page, size, name):
 
 @material_bp.route('/stocking', methods=['POST'])
 @get_params(
-    params=['name', 'spec', 'unit', 'amount', 'price', 'warehouseId', 'type', 'code'],
-    types=[str, str, str, str, str, str, str, str],
+    params=['name', 'spec', 'unit', 'amount', 'price', 'warehouseId', 'type', 'code', 'supply'],
+    types=[str, str, str, str, str, str, str, str, str],
     methods='POST',
     check_para=True
 )
 @jwt_required()
-def stocking_material(name, spec, unit, amount, price, warehouseId, type, code):
+def stocking_material(name, spec, unit, amount, price, warehouseId, type, code, supply):
     material = Material(
         name=name,
         spec=spec,
@@ -100,7 +100,8 @@ def stocking_material(name, spec, unit, amount, price, warehouseId, type, code):
         warehouse_id=warehouseId,
         type=type,
         barcode=code,
-        user_id=current_user.id
+        user_id=current_user.id,
+        supply=supply
     )
     material.save()
     MaterialIn(
