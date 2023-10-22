@@ -11,8 +11,8 @@ worker_class = 'eventlet'
 print_config = False
 # 日志配置
 loglevel = 'info'
-accesslog = '/var/log/dashboard/gunicorn_access.log'
-errorlog = '/var/log/dashboard/gunicorn_error.log'
-pidfile = '/var/log/dashboard/gunicorn.pid'
+accesslog = '/var/log/wms/gunicorn_access.log'
+errorlog = '/var/log/wms/gunicorn_error.log'
+pidfile = '/var/log/wms/gunicorn.pid'
 # 最大并发量
 worker_connections = 2000
