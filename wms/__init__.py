@@ -14,7 +14,7 @@ from wms.api.auth import auth_bp
 from wms.api.index import index_bp
 from wms.api.user import user_bp
 from wms.plugins import register_extensions
-from wms.settings import DevelopmentConfig, ProductionConfig
+from wms.settings import DevelopmentConfig, ProductionConfig, app_configuration
 from wms.models import *
 from wms.plugins import db
 from wms.api.warehouse import warehouse_bp
